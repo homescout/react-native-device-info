@@ -18,7 +18,6 @@ else
   cp example/README.md TEMP/
   cp example/android/local.properties TEMP/android/ || true
   cp example/App.js TEMP/
-  cp example/ios/Podfile TEMP/ios/
 fi
 
 # Purge the old sample
@@ -37,15 +36,21 @@ cd ios && pod install && cd ..
 
 # Patch the build.gradle directly to slice in our android play version
 # react-native 0.60 is AndroidX! Set up a bunch of AndroidX version
-sed -i -e 's/ext {$/ext {        googlePlayServicesVersion = "17.0.0"/' android/build.gradle
+sed -i -e 's/ext {$/ext {        firebaseIidVersion = "19.0.1"/' android/build.gradle
 sed -i -e 's/ext {$/ext {        minSdkVersion = 16/' android/build.gradle
 sed -i -e 's/ext {$/ext {        supportLibVersion = "1.0.2"/' android/build.gradle
 sed -i -e 's/ext {$/ext {        mediaCompatVersion = "1.0.1"/' android/build.gradle
 sed -i -e 's/ext {$/ext {        supportV4Version = "1.0.1"/' android/build.gradle
 rm -f android/build.gradle??
 
+# Patch the app/build.gradle to enable the JS bundle in debug - this is important
+# For testing because iOS9 and Android API<18 can't do port-forwarding so they can't
+# see a local dev bundle server, they have to have the bundle packaged and in the app
+sed -i -e $'s/^project.ext.react = \[/project.ext.react = \[\\\n    bundleInDebug: true,/' android/app/build.gradle
+rm -f android/app/build.gradle??
+
 # Patch the AndroidManifest directly to add our permissions
-sed -i -e 's/INTERNET" \/>/INTERNET" \/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" \/><uses-permission android:name="android.permission.ACCESS_WIFI_STATE" \/><uses-permission android:name="android.permission.BLUETOOTH" \/><uses-permission android:name="android.permission.READ_PHONE_STATE" \/>/' android/app/src/main/AndroidManifest.xml
+sed -i -e 's/INTERNET" \/>/INTERNET" \/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" \/><uses-permission android:name="android.permission.ACCESS_WIFI_STATE" \/><uses-permission android:name="android.permission.READ_PHONE_STATE" \/>/' android/app/src/main/AndroidManifest.xml
 rm -f android/app/src/main/AndroidManifest.xml??
 
 # Patch the AppDelegate for iOS battery level
